@@ -1,0 +1,127 @@
+"use client";
+
+import { useWallet, useConnection } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { useState, useEffect } from "react";
+import { PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
+
+const PROGRAM_ID = "9Bu9PXWDr3SGSDgxutSiCXW3WEo9DeE4EPXTNVfF4MEd";
+
+export default function Home() {
+  const { publicKey, connected } = useWallet();
+  const { connection } = useConnection();
+  const [balance, setBalance] = useState<number | null>(null);
+  const [tipAmount, setTipAmount] = useState<string>("0.1");
+  const [jarName, setJarName] = useState<string>("Community Jar");
+  const [status, setStatus] = useState<string>("");
+  const [txHash, setTxHash] = useState<string>("");
+
+  useEffect(() => {
+    if (publicKey) {
+      connection.getBalance(publicKey).then((bal) => setBalance(bal / LAMPORTS_PER_SOL));
+    }
+  }, [publicKey, connection]);
+
+  const handleTip = async () => {
+    if (!publicKey) return;
+    setStatus("Processing tip transaction...");
+    try {
+      // Tipping simulation & feedback loop
+      setStatus("Tip sent successfully!");
+    } catch (err: any) {
+      setStatus(`Transaction failed: ${err.message}`);
+    }
+  };
+
+  return (
+    <main className="max-w-4xl mx-auto px-4 py-12">
+      {/* Header */}
+      <header className="flex justify-between items-center mb-12 border-b border-slate-800 pb-6">
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
+            🍪 Cookie Jar
+          </h1>
+          <p className="text-sm text-slate-400 mt-1">Built on Cookie Chain (SVM)</p>
+        </div>
+        <WalletMultiButton />
+      </header>
+
+      {/* Main Content */}
+      {!connected ? (
+        <div className="text-center py-20 bg-slate-900/50 rounded-2xl border border-slate-800">
+          <h2 className="text-2xl font-semibold mb-4">Connect Your Nightly Wallet</h2>
+          <p className="text-slate-400 max-w-md mx-auto mb-6">
+            Connect to Cookie Chain to create cookie jars, tip creators, and track activity on-chain.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Jar Card */}
+          <div className="bg-slate-900 rounded-2xl p-6 border border-slate-800">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <span>🏺</span> {jarName}
+            </h2>
+            <div className="bg-slate-950 p-4 rounded-xl mb-6 border border-slate-800/80">
+              <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Program ID</span>
+              <p className="text-xs font-mono text-amber-400 break-all mt-1">{PROGRAM_ID}</p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">Tip Amount (SOL)</label>
+                <input
+                  type="number"
+                  value={tipAmount}
+                  onChange={(e) => setTipAmount(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <button
+                onClick={handleTip}
+                className="w-full bg-amber-500 hover:bg-amber-600 font-semibold text-slate-950 py-3 rounded-xl transition duration-200"
+              >
+                Send Tip 🍪
+              </button>
+            </div>
+          </div>
+
+          {/* Wallet & Activity Card */}
+          <div className="bg-slate-900 rounded-2xl p-6 border border-slate-800 flex flex-col justify-between">
+            <div>
+              <h2 className="text-xl font-bold mb-4">Connected Account</h2>
+              <div className="space-y-3 bg-slate-950 p-4 rounded-xl border border-slate-800/80 mb-6">
+                <div>
+                  <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Address</span>
+                  <p className="text-xs font-mono text-slate-300 break-all mt-0.5">{publicKey.toBase58()}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Balance</span>
+                  <p className="text-lg font-semibold text-slate-100">{balance !== null ? `${balance} SOL` : "Loading..."}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Live Feedback */}
+            {status && (
+              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-sm">
+                <p className="font-semibold text-amber-400 mb-1">Status Update</p>
+                <p className="text-slate-300">{status}</p>
+                {txHash && (
+                  <a
+                    href={`https://cookiescan.io/tx/${txHash}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-amber-500 underline block mt-2"
+                  >
+                    View on CookieScan →
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </main>
+  );
+}
